@@ -1,154 +1,179 @@
-# Whatsapp_bot_nodejs
+# 📲 Whatsapp Bot Node.js
 
-Primeiramente você deve criar um banco de dados para o bot com id int auto_increment PRIMARY KEY, nome, Whatsapp, id_bot e
-boas_vindas
+Bot de automação para WhatsApp desenvolvido em **Node.js** utilizando **Puppeteer**, capaz de enviar mensagens de boas-vindas automaticamente e responder mensagens, com controle via API REST.
 
-Cadastrar o usuário com o endpoint POST Cadastro
+---
 
-Pegue o id do bot com o endpoint GET Token que vai
-retorna-lo
+## 🚀 Funcionalidades
 
-Use o endpoint POST inicializar e coloque o id do bot como parâmetro ele irá começar o processo
+- Envio automático de mensagens de boas-vindas
+- Envio manual de mensagens via API
+- Autenticação via QR Code
+- Controle de status do bot
+- Reset diário para reenvio de boas-vindas
+- Integração simples com qualquer backend
 
-Use o endpoint GET status para acompanhar
+---
 
-Use o endpoind GET RequestQR com o id do banco de dados do prestador que você
-deseja inicializar ele retornará o QRcode que deve ser escaneado pelo prestador então se tudo der certo o bot vai estar funcionado se não
-use o endpoint GET status para acompanhar 
+## 🗄️ Estrutura do Banco de Dados
 
-Use o endpoint POST Enviar com o id do bot, whatsapp de quem vai receber e a mensagem. 
+Antes de iniciar, crie uma tabela no banco de dados com os seguintes campos:
 
-Você precisará usar o endpoint POST Resetar_dia todos os dias para que o bot possa reenviar as mensagens de boas-vindas.
+```sql
+id INT AUTO_INCREMENT PRIMARY KEY,
+nome VARCHAR(255),
+whatsapp VARCHAR(20),
+id_bot VARCHAR(255),
+boas_vindas TEXT
+```
 
+---
 
-Exemplo em Php:
+## 🔄 Fluxo de Funcionamento
 
-    public static function criarPrestador($nome, $whatsapp, $boasVindas){
-        $client = self::getClient();
-        $url = self::getUrl('/Cadastro');
-        $headers = [
-            'Content-Type' => 'application/json',
-        ];
-        $body = json_encode([
-            "nome" => $nome,
-            "whatsapp" => preg_replace('/(\(|\)|\-|\s)/', '', $whatsapp),
-            "boas_vindas" => $boasVindas
+1. Cadastrar o usuário/prestador  
+2. Obter o token (id do bot)  
+3. Inicializar o bot  
+4. Gerar e escanear o QR Code  
+5. Acompanhar status  
+6. Enviar mensagens  
+7. Resetar o dia para reenviar boas-vindas  
+
+---
+
+## 📌 Endpoints da API
+
+### 🔹 POST `/Cadastro`
+
+Cadastra um novo prestador/bot.
+
+```json
+{
+  "nome": "",
+  "whatsapp": "",
+  "boas_vindas": ""
+}
+```
+
+**Retorno:** Cadastro criado com sucesso.
+
+---
+
+### 🔹 POST `/Update/{id}`
+
+Atualiza os dados de um prestador.
+
+```json
+{
+  "nome": "",
+  "whatsapp": "",
+  "boas_vindas": ""
+}
+```
+
+**Retorno:** Prestador atualizado.
+
+---
+
+### 🔹 GET `/Todos`
+
+Retorna todos os prestadores cadastrados.
+
+---
+
+### 🔹 GET `/Status/{id}`
+
+Retorna o status atual do bot.
+
+---
+
+### 🔹 POST `/Inicializar/{id}`
+
+Inicializa o bot utilizando o ID informado.
+
+**Retorno:** `Inicializado`
+
+---
+
+### 🔹 GET `/RequestQR/{id}`
+
+Gera o QR Code para autenticação no WhatsApp.
+
+**Retorno:** QR Code em Base64.
+
+---
+
+### 🔹 GET `/Token/{id}`
+
+Retorna o identificador do bot (`id_bot`).
+
+---
+
+### 🔹 POST `/Enviar`
+
+Envia uma mensagem manualmente.
+
+```json
+{
+  "id": "",
+  "whatsapp": "",
+  "mensagem": ""
+}
+```
+
+**Retorno:** Mensagem enviada.
+
+---
+
+### 🔹 POST `/Resetar_dia`
+
+Obrigatório executar diariamente para permitir o reenvio das mensagens de boas-vindas.
+
+---
+
+## 🧪 Exemplo de Uso em PHP
+
+```php
+public static function criarPrestador($nome, $whatsapp, $boasVindas){
+    $client = self::getClient();
+    $url = self::getUrl('/Cadastro');
+
+    $headers = [
+        'Content-Type' => 'application/json',
+    ];
+
+    $body = json_encode([
+        "nome" => $nome,
+        "whatsapp" => preg_replace('/(\(|\)|\-|\s)/', '', $whatsapp),
+        "boas_vindas" => $boasVindas
+    ]);
+
+    try {
+        $response = $client->request('POST', $url, [
+            'body' => $body,
+            'headers' => $headers
         ]);
-        try{
-            $response = $client->request('POST', $url, [
-                'body' => $body,
-                'headers' => $headers
-            ]);
-            $resposta = $response->getBody();
-            $codigo = $response->getStatusCode();
-        }catch (GuzzleException $e){
-            $resposta = $e->getMessage();
-            $codigo = $e->getCode();
-        }
 
+        $resposta = $response->getBody();
+        $codigo = $response->getStatusCode();
 
-        if($codigo >= 200 AND $codigo < 300){
-            return json_decode($resposta);
-        }
-
+    } catch (GuzzleException $e) {
         return false;
     }
 
+    if ($codigo >= 200 && $codigo < 300) {
+        return json_decode($resposta);
+    }
 
+    return false;
+}
+```
 
+---
 
+## ⚠️ Observações Importantes
 
-
-### Endpoint POST {{ _.base }}/Cadastro 
-
-{ 
-
-	"nome": "", 
-
-	"whatsapp": "", 
-
-	"boas_vindas": “" 
-
-} 
-
-```Retorna: O cadastro```
-
-
-
- 
-### Endpoint POST {{ _.base }}/Update/Parametros_id 
-
-{ 
-
-	"nome": "", 
-
-	"whatsapp": "", 
-
-	"boas_vindas": "" 
-
-} 
-
-```Retorna: O prestador atualizado ```
-
-
-
-
-### Endpoint GET {{ _.base }}/Todos
-
-```Retorna: Todos os Prestadores```
-
-
-
-
-### Endpoint GET {{ _.base }}/Status/Parametros_id 
-
-```Retorna: Status atual```
- 
-
-
-
-
-### Endpoint POST {{ _.base }}/Inicializar/Parametros_id 
-
-```Retorna: “Inicializado”```
- 
-
-
-
-
-### Endpoint POST {{ _.base }}/Enviar 
-
-{ 
-
-	"id": "",                                            
-
-	"whatsapp": "", 
-
-	"mensagem": "" 
-
-} 
-
-```Retorna: "Mensagem enviada para (EndereçoWpp)"```
- 
-
-
-
-
-### Endpoint GET {{ _.base }}/RequestQR/Parametros_id 
-
-```Retorna: QRcode Base64```
- 
-
-
-
-
-### Endpoint GET {{ _.base }}/Token/Parametros_id 
-
-```Retorna: O id_bot ```
-
-
-
- 
-### Endpoint POST {{ _.base }}/Resetar_dia 
-
-```Retorna: Uma lista vazia```
+- O QR Code deve ser escaneado pelo WhatsApp do prestador
+- Caso algo não funcione, utilize o endpoint `/Status`
+- O reset diário é essencial para o funcionamento correto das boas-vindas
+- O projeto utiliza automação de navegador e pode sofrer alterações conforme mudanças no WhatsApp Web
